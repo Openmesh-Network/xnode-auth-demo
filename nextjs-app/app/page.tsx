@@ -1,7 +1,12 @@
-import React from "react"
+import { User } from "@/components/user";
+import { cookies as getCookies } from "next/headers";
 
-export default function IndexPage() {
+export default async function IndexPage() {
+  const cookies = await getCookies();
   return (
-    <span>Hello world!</span>
-  )
+    <User
+      signature={cookies.get("xnode_auth_signature")?.value}
+      timestamp={cookies.get("xnode_auth_timestamp")?.value}
+    />
+  );
 }

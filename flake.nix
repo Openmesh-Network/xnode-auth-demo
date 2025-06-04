@@ -1,5 +1,5 @@
 {
-  description = "Nextjs app running on Xnode!";
+  description = "Xnode Auth example application.";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs?ref=nixos-unstable";

@@ -5,13 +5,13 @@
   ...
 }:
 let
-  cfg = config.services.xnode-nextjs-template;
-  xnode-nextjs-template = pkgs.callPackage ./package.nix { };
+  cfg = config.services.xnode-auth-demo;
+  xnode-auth-demo = pkgs.callPackage ./package.nix { };
 in
 {
   options = {
-    services.xnode-nextjs-template = {
-      enable = lib.mkEnableOption "Enable the nextjs app";
+    services.xnode-auth-demo = {
+      enable = lib.mkEnableOption "Enable Xnode Auth Demo";
 
       hostname = lib.mkOption {
         type = lib.types.str;
@@ -33,7 +33,8 @@ in
 
       openFirewall = lib.mkOption {
         type = lib.types.bool;
-        default = true;
+        default = false;
+        example = true;
         description = ''
           Whether to open ports in the firewall for this application.
         '';
@@ -42,24 +43,24 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    users.groups.xnode-nextjs-template = { };
-    users.users.xnode-nextjs-template = {
+    users.groups.xnode-auth-demo = { };
+    users.users.xnode-auth-demo = {
       isSystemUser = true;
-      group = "xnode-nextjs-template";
+      group = "xnode-auth-demo";
     };
 
-    systemd.services.xnode-nextjs-template = {
+    systemd.services.xnode-auth-demo = {
       wantedBy = [ "multi-user.target" ];
-      description = "Nextjs App.";
+      description = "Xnode Auth example application.";
       after = [ "network.target" ];
       environment = {
         HOSTNAME = cfg.hostname;
         PORT = toString cfg.port;
       };
       serviceConfig = {
-        ExecStart = "${lib.getExe xnode-nextjs-template}";
-        User = "xnode-nextjs-template";
-        Group = "xnode-nextjs-template";
+        ExecStart = "${lib.getExe xnode-auth-demo}";
+        User = "xnode-auth-demo";
+        Group = "xnode-auth-demo";
         CacheDirectory = "nextjs-app";
       };
     };
