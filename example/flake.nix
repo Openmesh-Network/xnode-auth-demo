@@ -6,6 +6,15 @@
     nixpkgs.follows = "xnode-auth-demo/nixpkgs";
   };
 
+  nixConfig = {
+    extra-substituters = [
+      "https://openmesh.cachix.org"
+    ];
+    extra-trusted-public-keys = [
+      "openmesh.cachix.org-1:du4NDeMWxcX8T5GddfuD0s/Tosl3+6b+T2+CLKHgXvQ="
+    ];
+  };
+
   outputs = inputs: {
     nixosConfigurations.container = inputs.nixpkgs.lib.nixosSystem {
       specialArgs = {
@@ -20,36 +29,17 @@
           networking.hostName = "xnode-auth";
           nixpkgs.hostPlatform = "x86_64-linux";
           system.stateVersion = "25.05";
-          services.xnode-auth.access."localhost" = [ "eth:519ce4c129a981b2cbb4c3990b1391da24e8ebf3" ];
+          services.xnode-auth.domains."xnode-auth-demo" = {
+            accessList = [ "eth:519ce4c129a981b2cbb4c3990b1391da24e8ebf3" ];
+          };
           # END USER CONFIG
 
           services.nginx = {
             enable = true;
             virtualHosts."xnode-auth-demo" = {
-              default = true;
-              serverName = "_";
-              locations = {
-                "/" = {
-                  proxyPass = "http://localhost:3000"; # xnode-auth-demo
-                  extraConfig = ''
-                    auth_request /xnode-auth/api/validate;
-                    error_page 401 = @login;
-                  '';
-                };
-                "/xnode-auth" = {
-                  proxyPass = "http://localhost:34401";
-                };
-                "/xnode-auth/api/validate" = {
-                  proxyPass = "http://localhost:34401/xnode-auth/api/validate";
-                  extraConfig = ''
-                    proxy_set_header Host $host;
-                    proxy_pass_request_body off;
-                    proxy_set_header Content-Length "";
-                  '';
-                };
-                "@login" = {
-                  return = "302 $scheme://$host/xnode-auth?redirect=$scheme://$host$request_uri";
-                };
+              serverName = "localhost";
+              locations."/" = {
+                proxyPass = "http://localhost:3000"; # xnode-auth-demo
               };
             };
           };
