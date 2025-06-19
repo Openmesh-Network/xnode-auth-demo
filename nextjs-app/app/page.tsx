@@ -1,12 +1,11 @@
-import { User } from "@/components/user";
-import { cookies as getCookies } from "next/headers";
+import Link from "next/link";
 
 export default async function IndexPage() {
-  const cookies = await getCookies();
   return (
-    <User
-      signature={cookies.get("xnode_auth_signature")?.value}
-      timestamp={cookies.get("xnode_auth_timestamp")?.value}
-    />
+    <div>
+      <span>Hello public user!</span>
+      <br />
+      <Link href="/private">Login</Link>
+    </div>
   );
 }
