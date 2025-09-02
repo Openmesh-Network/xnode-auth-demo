@@ -22,49 +22,66 @@
       };
       modules = [
         inputs.xnode-manager.nixosModules.container
+        {
+          services.xnode-container.xnode-config = {
+            host-platform = ./xnode-config/host-platform;
+            state-version = ./xnode-config/state-version;
+            hostname = ./xnode-config/hostname;
+          };
+        }
         inputs.xnode-auth.nixosModules.default
         inputs.xnode-auth-demo.nixosModules.default
-        {
-          # START USER CONFIG
-          networking.hostName = "xnode-auth";
-          nixpkgs.hostPlatform = "x86_64-linux";
-          system.stateVersion = "25.05";
-          services.xnode-auth.domains."xnode-auth-demo" = {
-            accessList = {
-              "regex:^eth:.*$" = {
-                paths = "^\/private(?:\?.*)?$";
-              };
-              "eth:519ce4c129a981b2cbb4c3990b1391da24e8ebf3" = { };
+        (
+          { lib, ... }:
+          {
+            # START USER CONFIG
+            services.xnode-auth.domains."xnode-auth-demo".accessList."regex:^eth:.*$" = {
+              paths = "^\/private(?:\\?.*)?$";
             };
-            paths = [
+            services.xnode-auth.domains."xnode-auth-demo".accessList."eth:519ce4c129a981b2cbb4c3990b1391da24e8ebf3" =
+              { };
+            services.xnode-auth.domains."xnode-auth-demo".paths = [
               "/private"
               "/admin"
             ];
-          };
-          # END USER CONFIG
+            # END USER CONFIG
 
-          services.nginx = {
-            enable = true;
-            virtualHosts."xnode-auth-demo" = {
-              serverName = "xnode-auth.container";
-              locations."/" = {
-                proxyPass = "http://127.0.0.1:3000"; # xnode-auth-demo
-              };
-              # Separate location entries are requires if the root is not protected
-              locations."/private" = {
-                proxyPass = "http://127.0.0.1:3000";
-              };
-              locations."/admin" = {
-                proxyPass = "http://127.0.0.1:3000";
+            services.nginx = {
+              enable = true;
+              virtualHosts."xnode-auth-demo" = {
+                serverName = "xnode-auth.container";
+                enableACME = true;
+                forceSSL = true;
+                locations."/" = {
+                  proxyPass = "http://127.0.0.1:3000"; # xnode-auth-demo
+                };
+                # Separate location entries are requires if the root is not protected
+                locations."/private" = {
+                  proxyPass = "http://127.0.0.1:3000";
+                };
+                locations."/admin" = {
+                  proxyPass = "http://127.0.0.1:3000";
+                };
               };
             };
-          };
 
-          services.xnode-auth.enable = true;
-          services.xnode-auth-demo.enable = true; # Example application to protect
+            # self-signed https certificate
+            security.acme = {
+              acceptTerms = true;
+              defaults.email = "info@xnode-auth.container";
+            };
+            systemd.services."acme-xnode-auth.container".script = lib.mkForce ''echo "selfsigned only"'';
 
-          networking.firewall.allowedTCPPorts = [ 80 ];
-        }
+            services.xnode-auth.enable = true;
+            services.xnode-auth-demo.enable = true; # Example application to protect
+
+            networking.hostName = "xnode-auth";
+            networking.firewall.allowedTCPPorts = [
+              80
+              443
+            ];
+          }
+        )
       ];
     };
   };
